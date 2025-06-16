@@ -5,9 +5,14 @@ public class ColorChanger
     private float _maxColorValue = 1f;
     private float _minColorValue = 0f;
 
-    public void ChangeColor(MeshRenderer renderer)
+    public void SetRandomColor(MeshRenderer renderer)
     {
         renderer.material.color = GenerateColor();
+    }
+
+    public void SetColor(MeshRenderer renderer, Color color)
+    {
+        renderer.material.color = color;
     }
 
     private Color GenerateColor() =>
