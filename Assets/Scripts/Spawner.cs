@@ -64,7 +64,7 @@ public class Spawner : MonoBehaviour
 
     private IEnumerator GetCubeFromPool()
     {
-        while (true)
+        while (isActiveAndEnabled)
         {
             yield return new WaitForSecondsRealtime(_spawnRate);
 

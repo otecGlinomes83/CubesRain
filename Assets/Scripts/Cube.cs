@@ -10,6 +10,7 @@ public class Cube : MonoBehaviour
     private ColorChanger _colorChanger = new ColorChanger();
 
     private Color _defaultColor;
+
     private bool IsReleasing = false;
 
     private int _minDelay = 2;
@@ -27,17 +28,6 @@ public class Cube : MonoBehaviour
         _defaultColor = MeshRenderer.material.color;
     }
 
-    public void SetDefault()
-    {
-        transform.rotation = Quaternion.identity;
-        _rigidbody.linearVelocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
-
-        _colorChanger.SetColor(MeshRenderer, _defaultColor);
-    }
-
-    public float GenerateDelay() => UnityEngine.Random.Range(_minDelay, _maxDelay);
-
     private void OnCollisionEnter(Collision collision)
     {
         if (IsReleasing || collision.collider.TryGetComponent<Cube>(out _) == true)
@@ -49,6 +39,17 @@ public class Cube : MonoBehaviour
 
         StartCoroutine(DelayedRelease(GenerateDelay()));
     }
+
+    public void SetDefault()
+    {
+        transform.rotation = Quaternion.identity;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+
+        _colorChanger.SetColor(MeshRenderer, _defaultColor);
+    }
+
+    public float GenerateDelay() => UnityEngine.Random.Range(_minDelay, _maxDelay);
 
     private IEnumerator DelayedRelease(float delay)
     {
