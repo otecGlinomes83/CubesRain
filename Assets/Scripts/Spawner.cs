@@ -1,41 +1,69 @@
-using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _cubePrefab;
-    [SerializeField] private float _repeatRate = 2f;
+    [SerializeField] private Cube _cubePrefab;
+    [SerializeField] private List<HitDetector> _cubeDetectors;
+
+    [SerializeField] private float _spawnRate;
     [SerializeField] private int _poolCapacity = 10;
     [SerializeField] private int _poolMaxSize = 10;
 
-    private ObjectPool<GameObject> _cubePool;
+    private float _minCoordinateValue = -10f;
+    private float _maxCoordinateValue = 10f;
 
     private ColorChanger _colorChanger = new ColorChanger();
 
+    private ObjectPool<Cube> _cubePool;
+    private Color _originalColor;
+
     private void Awake()
     {
-        _cubePool = new ObjectPool<GameObject>(
+        _cubePool = new ObjectPool<Cube>(
             createFunc: () => Instantiate(_cubePrefab),
-            actionOnGet: (cube) => ActionOnGet(cube),
-            actionOnRelease: (cube) => cube.SetActive(false),
+            actionOnGet: (cube) => GetCube(cube),
+            actionOnRelease: (cube) => Release(cube),
             actionOnDestroy: (cube) => Destroy(cube),
             collectionCheck: true,
             defaultCapacity: _poolCapacity,
             maxSize: _poolMaxSize);
+
+        MeshRenderer prefabMeshRenderer = _cubePrefab.GetComponent<MeshRenderer>();
+
+        _originalColor = prefabMeshRenderer.sharedMaterial.color;
     }
 
-
-    private void ActionOnGet(GameObject cube)
+    private void OnEnable()
     {
-        cube.transform.position = new Vector3(UnityEngine.Random.Range(-5f, 5f), 15f, UnityEngine.Random.Range(-5f, 5f));
-        cube.SetActive(true);
+        foreach (var detector in _cubeDetectors)
+        {
+            detector.CubeDetected += OnCubeDetected;
+        }
+    }
+
+    private void OnDisable()
+    {
+        foreach (var detector in _cubeDetectors)
+        {
+            detector.CubeDetected -= OnCubeDetected;
+        }
+    }
+
+    private void GetCube(Cube cube)
+    {
+        cube.transform.position = new Vector3(Random.Range(_minCoordinateValue, _maxCoordinateValue), 20f, Random.Range(_minCoordinateValue, _maxCoordinateValue));
+
+        cube.gameObject.SetActive(true);
+
+        cube.MeshRenderer.material.color = _originalColor;
     }
 
     private void Start()
     {
-        InvokeRepeating(nameof(GetCube), 0f, _repeatRate);
+        InvokeRepeating(nameof(GetCube), 0f, _spawnRate);
     }
 
     private void GetCube()
@@ -43,22 +71,26 @@ public class Spawner : MonoBehaviour
         _cubePool.Get();
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void Release(Cube cube)
     {
-        Cube cube;
+        cube.gameObject.SetActive(false);
+    }
 
-        if (other.TryGetComponent<Cube>(out cube) == false)
+    private void OnCubeDetected(Cube cube)
+    {
+        if (cube.IsReleasing)
             return;
 
         _colorChanger.ChangeColor(cube.MeshRenderer);
 
-        StartCoroutine(DelayedRelease(other.gameObject, cube.GenerateDelay()));
+        StartCoroutine(DelayedRelease(cube, cube.GenerateDelay()));
     }
 
-    private IEnumerator DelayedRelease(GameObject gameObject, float delay)
+    private IEnumerator DelayedRelease(Cube cube, float delay)
     {
+        cube.SetReleasing(true);
         yield return new WaitForSeconds(delay);
-
-        _cubePool.Release(gameObject);
+        _cubePool.Release(cube);
+        cube.SetReleasing(false);
     }
 }

@@ -1,11 +1,18 @@
 using System;
 using UnityEngine;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+[RequireComponent(typeof(BoxCollider))]
+
+public class HitDetector : MonoBehaviour
 {
-    [SerializeField] Collider TriggerZone;
+    private Collider _triggerZone;
 
     public event Action<Cube> CubeDetected;
+
+    private void Awake()
+    {
+        _triggerZone = GetComponent<Collider>();
+    }
 
     private void OnTriggerEnter(Collider other)
     {
