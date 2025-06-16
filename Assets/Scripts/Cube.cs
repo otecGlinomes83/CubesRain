@@ -11,7 +11,7 @@ public class Cube : MonoBehaviour
 
     private Color _defaultColor;
 
-    private bool IsReleasing = false;
+    private bool _isReleasing = false;
 
     private int _minDelay = 2;
     private int _maxDelay = 5;
@@ -30,10 +30,13 @@ public class Cube : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (IsReleasing || collision.collider.TryGetComponent<Cube>(out _) == true)
+        if (collision.collider.TryGetComponent<Platform>(out _) == false)
             return;
 
-        IsReleasing = true;
+        if (_isReleasing)
+            return;
+
+        _isReleasing = true;
 
         _colorChanger.SetRandomColor(MeshRenderer);
 
@@ -49,14 +52,15 @@ public class Cube : MonoBehaviour
         _colorChanger.SetColor(MeshRenderer, _defaultColor);
     }
 
-    public float GenerateDelay() => UnityEngine.Random.Range(_minDelay, _maxDelay);
+    public float GenerateDelay() =>
+        UnityEngine.Random.Range(_minDelay, _maxDelay);
 
     private IEnumerator DelayedRelease(float delay)
     {
         yield return new WaitForSeconds(delay);
 
-        IsReleasing = false;
-
         ReadyForRelease?.Invoke(this);
+
+        _isReleasing = false;
     }
 }

@@ -20,9 +20,9 @@ public class Spawner : MonoBehaviour
         _spawnZone = GetComponent<Collider>();
 
         _cubePool = new ObjectPool<Cube>(
-            createFunc: () => CreateCube(),
-            actionOnGet: (cube) => SpawnRandomPosition(cube),
-            actionOnRelease: (cube) => cube.gameObject.SetActive(false));
+            createFunc: () => Instantiate(_cubePrefab),
+            actionOnGet: (cube) => SpawnCubeRandomPosition(cube),
+            actionOnRelease: (cube) => DeactivateCube(cube));
     }
 
     private void Start()
@@ -38,17 +38,17 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    private Cube CreateCube()
+    private IEnumerator GetCubeFromPool()
     {
-        Cube cube = Instantiate(_cubePrefab);
-        cube.ReadyForRelease += _cubePool.Release;
+        while (isActiveAndEnabled)
+        {
+            yield return new WaitForSecondsRealtime(_spawnRate);
 
-        _allCubes.Add(cube);
-
-        return cube;
+            _cubePool.Get();
+        }
     }
 
-    private void SpawnRandomPosition(Cube cube)
+    private void SpawnCubeRandomPosition(Cube cube)
     {
         cube.transform.position = new Vector3
             (
@@ -60,15 +60,13 @@ public class Spawner : MonoBehaviour
         cube.SetDefault();
 
         cube.gameObject.SetActive(true);
+
+        cube.ReadyForRelease += _cubePool.Release;
     }
 
-    private IEnumerator GetCubeFromPool()
+    private void DeactivateCube(Cube cube)
     {
-        while (isActiveAndEnabled)
-        {
-            yield return new WaitForSecondsRealtime(_spawnRate);
-
-            _cubePool.Get();
-        }
+        cube.ReadyForRelease -= _cubePool.Release;
+        cube.gameObject.SetActive(false);
     }
 }
