@@ -5,31 +5,42 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody), typeof(MeshRenderer))]
 public class Cube : MonoBehaviour
 {
-    public event Action<Cube> OnReadyForRelease;
+    public Rigidbody _rigidbody;
 
     private ColorChanger _colorChanger = new ColorChanger();
-    private Color _originalColor;
+
+    private Color _defaultColor;
+    private bool IsReleasing = false;
 
     private int _minDelay = 2;
     private int _maxDelay = 5;
 
+    public event Action<Cube> ReadyForRelease;
+
     public MeshRenderer MeshRenderer { get; private set; }
-    public bool IsReleasing { get; private set; } = false;
 
     private void Awake()
     {
         MeshRenderer = GetComponent<MeshRenderer>();
-        _originalColor = MeshRenderer.material.color;
+        _rigidbody = GetComponent<Rigidbody>();
+
+        _defaultColor = MeshRenderer.material.color;
+    }
+
+    public void SetDefault()
+    {
+        transform.rotation = Quaternion.identity;
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+
+        _colorChanger.SetColor(MeshRenderer, _defaultColor);
     }
 
     public float GenerateDelay() => UnityEngine.Random.Range(_minDelay, _maxDelay);
 
-    public void SetReleasing(bool newState) =>
-        IsReleasing = newState;
-
-    public void OnCubeDetected()
+    private void OnCollisionEnter(Collision collision)
     {
-        if (IsReleasing)
+        if (IsReleasing || collision.collider.TryGetComponent<Cube>(out _) == true)
             return;
 
         IsReleasing = true;
@@ -45,8 +56,6 @@ public class Cube : MonoBehaviour
 
         IsReleasing = false;
 
-        _colorChanger.SetColor(MeshRenderer, _originalColor);
-
-        OnReadyForRelease?.Invoke(this);
+        ReadyForRelease?.Invoke(this);
     }
 }

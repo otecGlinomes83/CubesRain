@@ -34,14 +34,14 @@ public class Spawner : MonoBehaviour
     {
         foreach (Cube cube in _allCubes)
         {
-            cube.OnReadyForRelease -= _cubePool.Release;
+            cube.ReadyForRelease -= _cubePool.Release;
         }
     }
 
     private Cube CreateCube()
     {
         Cube cube = Instantiate(_cubePrefab);
-        cube.OnReadyForRelease += _cubePool.Release;
+        cube.ReadyForRelease += _cubePool.Release;
 
         _allCubes.Add(cube);
 
@@ -56,6 +56,8 @@ public class Spawner : MonoBehaviour
             Random.Range(_spawnZone.bounds.min.y, _spawnZone.bounds.max.y),
             Random.Range(_spawnZone.bounds.min.z, _spawnZone.bounds.max.z)
             );
+
+        cube.SetDefault();
 
         cube.gameObject.SetActive(true);
     }
