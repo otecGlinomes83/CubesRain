@@ -15,6 +15,13 @@ public class ColorChanger
         renderer.material.color = color;
     }
 
+    public void SetAlpha(MeshRenderer renderer, float value)
+    {
+        Color color = renderer.material.color;
+        color.a = value;
+        renderer.material.color = color;
+    }
+
     private Color GenerateColor() =>
         new Color
         (
